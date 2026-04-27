@@ -155,6 +155,7 @@ CREATE TABLE v1_tasks_olap (
     dag_id BIGINT,
     dag_inserted_at TIMESTAMPTZ,
     parent_task_external_id UUID,
+    is_durable BOOLEAN NOT NULL DEFAULT FALSE,
 
     PRIMARY KEY (inserted_at, id, readable_status)
 ) PARTITION BY RANGE(inserted_at);
@@ -546,7 +547,7 @@ BEGIN
         parent_task_external_id
     FROM new_rows
     WHERE dag_id IS NULL
-    ON CONFLICT (inserted_at, id, readable_status, kind) DO NOTHING;
+    ON CONFLICT (inserted_at, id) DO NOTHING;
 
     INSERT INTO v1_lookup_table_olap (
         tenant_id,
@@ -679,7 +680,7 @@ BEGIN
         additional_metadata,
         parent_task_external_id
     FROM new_rows
-    ON CONFLICT (inserted_at, id, readable_status, kind) DO NOTHING;
+    ON CONFLICT (inserted_at, id) DO NOTHING;
 
     INSERT INTO v1_lookup_table_olap (
         tenant_id,
