@@ -9,7 +9,6 @@ import (
 	"github.com/hatchet-dev/hatchet/internal/services/partition"
 	"github.com/hatchet-dev/hatchet/internal/syncx"
 	v1 "github.com/hatchet-dev/hatchet/pkg/repository"
-	"github.com/hatchet-dev/hatchet/pkg/repository/sqlcv1"
 
 	"github.com/rs/zerolog"
 )

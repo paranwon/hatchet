@@ -3694,8 +3694,8 @@ const updateDAGStatusesFromMQ = `-- name: UpdateDAGStatusesFromMQ :many
 WITH inputs AS (
     SELECT
         UNNEST($1::UUID[]) AS tenant_id,
-        UNNEST($2::bigint[]) AS dag_id,
-        UNNEST($3::timestamptz[]) AS dag_inserted_at
+        UNNEST($2::BIGINT[]) AS dag_id,
+        UNNEST($3::TIMESTAMPTZ[]) AS dag_inserted_at
 ), locked_dags AS (
     SELECT id, inserted_at, tenant_id, external_id, display_name, workflow_id, workflow_version_id, readable_status, input, additional_metadata, parent_task_external_id, total_tasks
     FROM v1_dags_olap d
@@ -4116,11 +4116,11 @@ const updateTaskStatusesFromMQ = `-- name: UpdateTaskStatusesFromMQ :many
 WITH inputs AS (
     SELECT
         UNNEST($1::UUID[]) AS tenant_id,
-        UNNEST($2::bigint[]) AS task_id,
-        UNNEST($3::timestamptz[]) AS task_inserted_at,
+        UNNEST($2::BIGINT[]) AS task_id,
+        UNNEST($3::TIMESTAMPTZ[]) AS task_inserted_at,
         UNNEST($4::v1_readable_status_olap[]) AS readable_status,
         UNNEST($5::UUID[]) AS worker_id,
-        UNNEST($6::int[]) AS retry_count
+        UNNEST($6::INTEGER[]) AS retry_count
 ), locked_tasks AS (
     SELECT tenant_id, id, inserted_at, external_id, queue, action_id, step_id, workflow_id, workflow_version_id, workflow_run_id, schedule_timeout, step_timeout, priority, sticky, desired_worker_id, display_name, input, additional_metadata, readable_status, latest_retry_count, latest_worker_id, dag_id, dag_inserted_at, parent_task_external_id, is_durable
     FROM v1_tasks_olap

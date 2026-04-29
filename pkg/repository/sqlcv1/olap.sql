@@ -1024,11 +1024,11 @@ FROM
 WITH inputs AS (
     SELECT
         UNNEST(@tenantIds::UUID[]) AS tenant_id,
-        UNNEST(@taskIds::bigint[]) AS task_id,
-        UNNEST(@taskInsertedAts::timestamptz[]) AS task_inserted_at,
+        UNNEST(@taskIds::BIGINT[]) AS task_id,
+        UNNEST(@taskInsertedAts::TIMESTAMPTZ[]) AS task_inserted_at,
         UNNEST(@statuses::v1_readable_status_olap[]) AS readable_status,
         UNNEST(@workerIds::UUID[]) AS worker_id,
-        UNNEST(@retryCounts::int[]) AS retry_count
+        UNNEST(@retryCounts::INTEGER[]) AS retry_count
 ), locked_tasks AS (
     SELECT *
     FROM v1_tasks_olap
@@ -1099,8 +1099,8 @@ WHERE (t.inserted_at, t.id, t.tenant_id) IN (
 WITH inputs AS (
     SELECT
         UNNEST(@tenantIds::UUID[]) AS tenant_id,
-        UNNEST(@dagIds::bigint[]) AS dag_id,
-        UNNEST(@dagInsertedAts::timestamptz[]) AS dag_inserted_at
+        UNNEST(@dagIds::BIGINT[]) AS dag_id,
+        UNNEST(@dagInsertedAts::TIMESTAMPTZ[]) AS dag_inserted_at
 ), locked_dags AS (
     SELECT *
     FROM v1_dags_olap d
