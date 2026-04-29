@@ -922,6 +922,7 @@ func (tc *OLAPControllerImpl) handleCreateMonitoringEvent(ctx context.Context, t
 	}
 
 	if len(notFoundEvents) > 0 {
+		// qq: is it fine to use the task id here? the msg doesn't contain the inserted at, so we'd need to add that otherwise
 		notFoundTaskIDs := make(map[int64]struct{}, len(notFoundEvents))
 		for _, e := range notFoundEvents {
 			notFoundTaskIDs[e.TaskID] = struct{}{}
@@ -934,6 +935,7 @@ func (tc *OLAPControllerImpl) handleCreateMonitoringEvent(ctx context.Context, t
 				continue
 			}
 
+			// todo: make this configurable?
 			if msg.RequeueCount >= 10 {
 				tc.l.Error().Ctx(ctx).Msgf("giving up on requeuing monitoring event for task %d after %d attempts", msg.TaskId, msg.RequeueCount)
 				continue

@@ -1713,18 +1713,19 @@ func (r *OLAPRepositoryImpl) writeTaskEventBatch(ctx context.Context, tenantId u
 		return nil, err
 	}
 
-	foundTaskIDs := make(map[int64]struct{}, len(taskRows))
+	foundTasks := make(map[IdInsertedAt]struct{}, len(taskRows))
 	updatedTaskCount := 0
 	for _, row := range taskRows {
-		foundTaskIDs[row.TaskID] = struct{}{}
+		foundTasks[IdInsertedAt{ID: row.TaskID, InsertedAt: row.TaskInsertedAt}] = struct{}{}
 
 		if row.WasUpdated {
 			updatedTaskCount++
 		}
 	}
+
 	var notFoundEvents []sqlcv1.CreateTaskEventsOLAPParams
 	for _, event := range eventsForStatusUpdate {
-		if _, ok := foundTaskIDs[event.TaskID]; !ok {
+		if _, ok := foundTasks[IdInsertedAt{ID: event.TaskID, InsertedAt: event.TaskInsertedAt}]; !ok {
 			notFoundEvents = append(notFoundEvents, event)
 		}
 	}
