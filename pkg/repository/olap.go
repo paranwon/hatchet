@@ -1732,10 +1732,37 @@ func (r *OLAPRepositoryImpl) writeTaskEventBatch(ctx context.Context, tenantId u
 	dagStatusUpdates := r.prepareDAGStatusUpdateBatch(taskRows)
 
 	if len(dagStatusUpdates.Dagids) > 0 {
-		_, err = r.queries.UpdateDAGStatusesFromMQ(ctx, tx, dagStatusUpdates)
+		dagRows, dagErr := r.queries.UpdateDAGStatusesFromMQ(ctx, tx, dagStatusUpdates)
 
-		if err != nil {
-			return nil, err
+		if dagErr != nil {
+			return nil, dagErr
+		}
+
+		notFoundDags := make(map[IdInsertedAt]struct{})
+		for _, row := range dagRows {
+			if !row.DagFound {
+				notFoundDags[IdInsertedAt{
+					ID:         row.DagID,
+					InsertedAt: row.DagInsertedAt,
+				}] = struct{}{}
+			}
+		}
+
+		if len(notFoundDags) > 0 {
+			taskIDsForMissingDags := make(map[int64]struct{})
+			for _, row := range taskRows {
+				if row.DagID.Valid {
+					if _, ok := notFoundDags[IdInsertedAt{ID: row.DagID.Int64, InsertedAt: row.DagInsertedAt}]; ok {
+						taskIDsForMissingDags[row.TaskID] = struct{}{}
+					}
+				}
+			}
+
+			for _, event := range eventsForStatusUpdate {
+				if _, ok := taskIDsForMissingDags[event.TaskID]; ok {
+					notFoundEvents = append(notFoundEvents, event)
+				}
+			}
 		}
 	}
 

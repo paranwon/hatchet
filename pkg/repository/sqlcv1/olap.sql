@@ -1151,18 +1151,28 @@ WITH inputs AS (
         END::v1_readable_status_olap AS new_readable_status
     FROM
         dag_task_counts dtc
+), updated_dags AS (
+    UPDATE v1_dags_olap d
+    SET
+        readable_status = dns.new_readable_status
+    FROM
+        dag_new_statuses dns
+    WHERE
+        (d.inserted_at, d.id, d.tenant_id) = (dns.inserted_at, dns.id, dns.tenant_id)
+        AND dns.new_readable_status != d.readable_status
+    RETURNING
+        d.tenant_id, d.id, d.inserted_at
 )
 
-UPDATE v1_dags_olap d
-SET
-    readable_status = dns.new_readable_status
-FROM
-    dag_new_statuses dns
-WHERE
-    (d.inserted_at, d.id, d.tenant_id) = (dns.inserted_at, dns.id, dns.tenant_id)
-    AND dns.new_readable_status != d.readable_status
-RETURNING
-    d.tenant_id, d.id, d.inserted_at, d.readable_status, d.external_id, d.workflow_id
+SELECT
+    i.tenant_id::UUID AS tenant_id,
+    i.dag_id::BIGINT AS dag_id,
+    i.dag_inserted_at::TIMESTAMPTZ AS dag_inserted_at,
+    EXISTS(
+        SELECT 1 FROM locked_dags ld
+        WHERE (ld.inserted_at, ld.id, ld.tenant_id) = (i.dag_inserted_at, i.dag_id, i.tenant_id)
+    )::BOOLEAN AS dag_found
+FROM inputs i
 ;
 
 -- name: FindMinInsertedAtForDAGStatusUpdates :one
