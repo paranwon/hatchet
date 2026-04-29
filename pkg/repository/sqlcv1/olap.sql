@@ -1068,8 +1068,7 @@ WITH inputs AS (
                 AND i.readable_status != 'EVICTED'
             )
         )
-    RETURNING
-        t.tenant_id, t.id, t.inserted_at, t.readable_status, t.external_id, t.latest_worker_id, t.workflow_id, t.dag_id, t.dag_inserted_at, (t.dag_id IS NOT NULL)::boolean AS is_dag_task
+    RETURNING t.*
 )
 
 SELECT
