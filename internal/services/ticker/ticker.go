@@ -137,6 +137,15 @@ func (t *TickerImpl) Start() (func() error, error) {
 
 	t.l.Debug().Ctx(ctx).Msgf("starting ticker %s", t.tickerId)
 
+	_, err := t.repov1.Ticker().CreateNewTicker(ctx, &v1.CreateTickerOpts{
+		ID: t.tickerId,
+	})
+
+	if err != nil {
+		cancel()
+		return nil, err
+	}
+
 	// initialize the cron schedules, so no need to wait for 15 seconds or
 	// a cron to be created
 	t.refreshCronSchedules(ctx)()
@@ -149,16 +158,6 @@ func (t *TickerImpl) Start() (func() error, error) {
 	queueCleanupFunc, err := t.mqv1.Subscribe(msgqueue.TICKER_UPDATE_QUEUE, cronUpdateHandler, msgqueue.NoOpHook)
 	if err != nil {
 		t.l.Err(err).Ctx(ctx).Msg("Could not subscribe to cron trigger update queue")
-	}
-
-	// register the ticker
-	_, err = t.repov1.Ticker().CreateNewTicker(ctx, &v1.CreateTickerOpts{
-		ID: t.tickerId,
-	})
-
-	if err != nil {
-		cancel()
-		return nil, err
 	}
 
 	_, err = t.s.NewJob(
