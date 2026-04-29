@@ -1108,20 +1108,6 @@ WITH inputs AS (
         FROM inputs
     )
     FOR UPDATE
-), relevant_tasks AS (
-    SELECT
-        d.tenant_id,
-        d.id AS dag_id,
-        d.inserted_at AS dag_inserted_at,
-        t.readable_status
-    FROM
-        locked_dags d
-    JOIN
-        v1_dag_to_task_olap dt ON
-            (d.id, d.inserted_at) = (dt.dag_id, dt.dag_inserted_at)
-    JOIN
-        v1_tasks_olap t ON
-            (dt.task_id, dt.task_inserted_at) = (t.id, t.inserted_at)
 ), dag_task_counts AS (
     SELECT
         d.id,
@@ -1129,17 +1115,19 @@ WITH inputs AS (
         d.readable_status,
         d.tenant_id,
         d.total_tasks,
-        COUNT(t.dag_id) AS task_count,
-        COUNT(t.dag_id) FILTER (WHERE t.readable_status = 'COMPLETED') AS completed_count,
-        COUNT(t.dag_id) FILTER (WHERE t.readable_status = 'FAILED') AS failed_count,
-        COUNT(t.dag_id) FILTER (WHERE t.readable_status = 'CANCELLED') AS cancelled_count,
-        COUNT(t.dag_id) FILTER (WHERE t.readable_status = 'QUEUED') AS queued_count,
-        COUNT(t.dag_id) FILTER (WHERE t.readable_status = 'RUNNING') AS running_count,
-        COUNT(t.dag_id) FILTER (WHERE t.readable_status = 'EVICTED') AS evicted_count
+        COUNT(t.id) AS task_count,
+        COUNT(t.id) FILTER (WHERE t.readable_status = 'COMPLETED') AS completed_count,
+        COUNT(t.id) FILTER (WHERE t.readable_status = 'FAILED') AS failed_count,
+        COUNT(t.id) FILTER (WHERE t.readable_status = 'CANCELLED') AS cancelled_count,
+        COUNT(t.id) FILTER (WHERE t.readable_status = 'QUEUED') AS queued_count,
+        COUNT(t.id) FILTER (WHERE t.readable_status = 'RUNNING') AS running_count,
+        COUNT(t.id) FILTER (WHERE t.readable_status = 'EVICTED') AS evicted_count
     FROM
         locked_dags d
-    LEFT JOIN
-        relevant_tasks t ON (d.tenant_id, d.id, d.inserted_at) = (t.tenant_id, t.dag_id, t.dag_inserted_at)
+    JOIN
+        v1_dag_to_task_olap dt ON (d.id, d.inserted_at) = (dt.dag_id, dt.dag_inserted_at)
+    JOIN
+        v1_tasks_olap t ON (dt.task_id, dt.task_inserted_at) = (t.id, t.inserted_at)
     GROUP BY
         d.id, d.inserted_at, d.readable_status, d.tenant_id, d.total_tasks
 ), dag_new_statuses AS (
