@@ -1621,12 +1621,7 @@ func (r *OLAPRepositoryImpl) prepareStatusUpdateBatch(ctx context.Context, tenan
 }
 
 func (r *OLAPRepositoryImpl) prepareDAGStatusUpdateBatch(taskRows []*sqlcv1.UpdateTaskStatusesFromMQRow) sqlcv1.UpdateDAGStatusesFromMQParams {
-	type dagKey struct {
-		DagID         int64
-		DagInsertedAt pgtype.Timestamptz
-	}
-
-	seen := make(map[dagKey]struct{})
+	seen := make(map[IdInsertedAt]struct{})
 	tenantIds := make([]uuid.UUID, 0)
 	dagIds := make([]int64, 0)
 	dagInsertedAts := make([]pgtype.Timestamptz, 0)
@@ -1636,7 +1631,7 @@ func (r *OLAPRepositoryImpl) prepareDAGStatusUpdateBatch(taskRows []*sqlcv1.Upda
 			continue
 		}
 
-		key := dagKey{DagID: row.DagID.Int64, DagInsertedAt: row.DagInsertedAt}
+		key := IdInsertedAt{ID: row.DagID.Int64, InsertedAt: row.DagInsertedAt}
 
 		if _, ok := seen[key]; !ok {
 			seen[key] = struct{}{}
