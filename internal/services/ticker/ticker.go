@@ -120,6 +120,12 @@ func New(fs ...TickerOpt) (*TickerImpl, error) {
 		return nil, fmt.Errorf("could not create scheduler: %w", err)
 	}
 
+	userCronScheduler, err := gocron.NewScheduler(gocron.WithLocation(time.UTC))
+
+	if err != nil {
+		return nil, fmt.Errorf("could not create user cron scheduler: %w", err)
+	}
+
 	return &TickerImpl{
 		mqv1:                   opts.mqv1,
 		l:                      opts.l,
@@ -128,6 +134,7 @@ func New(fs ...TickerOpt) (*TickerImpl, error) {
 		dv:                     opts.dv,
 		tickerId:               opts.tickerId,
 		ta:                     opts.ta,
+		userCronScheduler:      userCronScheduler,
 		userCronSchedulesToIds: make(map[string]string),
 	}, nil
 }
@@ -227,15 +234,6 @@ func (t *TickerImpl) Start() (func() error, error) {
 		cancel()
 		return nil, fmt.Errorf("could not schedule tenant resource limit alert polling: %w", err)
 	}
-
-	userCronScheduler, err := gocron.NewScheduler(gocron.WithLocation(time.UTC))
-
-	if err != nil {
-		cancel()
-		return nil, fmt.Errorf("could not create user cron scheduler: %w", err)
-	}
-
-	t.userCronScheduler = userCronScheduler
 
 	t.s.Start()
 	t.userCronScheduler.Start()
